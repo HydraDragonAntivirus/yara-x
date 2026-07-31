@@ -159,7 +159,7 @@ fn main(
             LOCAL_DATA_HASH.with(|h| *h.borrow_mut() = 0);
             return Err(ModuleError::MetadataError { err: e.to_string() });
         }
-    };
+    }
 }
 
 // ── Network functions ────────────────────────────────────────────────────────
