@@ -1,7 +1,6 @@
 // @generated
 
 pub mod analysis;
-pub mod androguard;
 pub mod console;
 pub mod crx;
 pub mod cuckoo;

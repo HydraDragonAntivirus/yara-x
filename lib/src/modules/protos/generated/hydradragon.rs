@@ -27,6 +27,15 @@ const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_3_7_2;
 // @@protoc_insertion_point(message:hydradragon.Hydradragon)
 #[derive(PartialEq,Clone,Default,Debug)]
 pub struct Hydradragon {
+    // message fields
+    // @@protoc_insertion_point(field:hydradragon.Hydradragon.min_sdk)
+    pub min_sdk: ::std::option::Option<i64>,
+    // @@protoc_insertion_point(field:hydradragon.Hydradragon.max_sdk)
+    pub max_sdk: ::std::option::Option<i64>,
+    // @@protoc_insertion_point(field:hydradragon.Hydradragon.target_sdk)
+    pub target_sdk: ::std::option::Option<i64>,
+    // @@protoc_insertion_point(field:hydradragon.Hydradragon.permissions_number)
+    pub permissions_number: ::std::option::Option<i64>,
     // special fields
     // @@protoc_insertion_point(special_field:hydradragon.Hydradragon.special_fields)
     pub special_fields: ::protobuf::SpecialFields,
@@ -43,9 +52,105 @@ impl Hydradragon {
         ::std::default::Default::default()
     }
 
+    // optional int64 min_sdk = 1;
+
+    pub fn min_sdk(&self) -> i64 {
+        self.min_sdk.unwrap_or(0)
+    }
+
+    pub fn clear_min_sdk(&mut self) {
+        self.min_sdk = ::std::option::Option::None;
+    }
+
+    pub fn has_min_sdk(&self) -> bool {
+        self.min_sdk.is_some()
+    }
+
+    // Param is passed by value, moved
+    pub fn set_min_sdk(&mut self, v: i64) {
+        self.min_sdk = ::std::option::Option::Some(v);
+    }
+
+    // optional int64 max_sdk = 2;
+
+    pub fn max_sdk(&self) -> i64 {
+        self.max_sdk.unwrap_or(0)
+    }
+
+    pub fn clear_max_sdk(&mut self) {
+        self.max_sdk = ::std::option::Option::None;
+    }
+
+    pub fn has_max_sdk(&self) -> bool {
+        self.max_sdk.is_some()
+    }
+
+    // Param is passed by value, moved
+    pub fn set_max_sdk(&mut self, v: i64) {
+        self.max_sdk = ::std::option::Option::Some(v);
+    }
+
+    // optional int64 target_sdk = 3;
+
+    pub fn target_sdk(&self) -> i64 {
+        self.target_sdk.unwrap_or(0)
+    }
+
+    pub fn clear_target_sdk(&mut self) {
+        self.target_sdk = ::std::option::Option::None;
+    }
+
+    pub fn has_target_sdk(&self) -> bool {
+        self.target_sdk.is_some()
+    }
+
+    // Param is passed by value, moved
+    pub fn set_target_sdk(&mut self, v: i64) {
+        self.target_sdk = ::std::option::Option::Some(v);
+    }
+
+    // optional int64 permissions_number = 4;
+
+    pub fn permissions_number(&self) -> i64 {
+        self.permissions_number.unwrap_or(0)
+    }
+
+    pub fn clear_permissions_number(&mut self) {
+        self.permissions_number = ::std::option::Option::None;
+    }
+
+    pub fn has_permissions_number(&self) -> bool {
+        self.permissions_number.is_some()
+    }
+
+    // Param is passed by value, moved
+    pub fn set_permissions_number(&mut self, v: i64) {
+        self.permissions_number = ::std::option::Option::Some(v);
+    }
+
     fn generated_message_descriptor_data() -> ::protobuf::reflect::GeneratedMessageDescriptorData {
-        let mut fields = ::std::vec::Vec::with_capacity(0);
+        let mut fields = ::std::vec::Vec::with_capacity(4);
         let mut oneofs = ::std::vec::Vec::with_capacity(0);
+        fields.push(::protobuf::reflect::rt::v2::make_option_accessor::<_, _>(
+            "min_sdk",
+            |m: &Hydradragon| { &m.min_sdk },
+            |m: &mut Hydradragon| { &mut m.min_sdk },
+        ));
+        fields.push(::protobuf::reflect::rt::v2::make_option_accessor::<_, _>(
+            "max_sdk",
+            |m: &Hydradragon| { &m.max_sdk },
+            |m: &mut Hydradragon| { &mut m.max_sdk },
+        ));
+        fields.push(::protobuf::reflect::rt::v2::make_option_accessor::<_, _>(
+            "target_sdk",
+            |m: &Hydradragon| { &m.target_sdk },
+            |m: &mut Hydradragon| { &mut m.target_sdk },
+        ));
+        fields.push(::protobuf::reflect::rt::v2::make_option_accessor::<_, _>(
+            "permissions_number",
+            |m: &Hydradragon| { &m.permissions_number },
+            |m: &mut Hydradragon| { &mut m.permissions_number },
+        ));
         ::protobuf::reflect::GeneratedMessageDescriptorData::new_2::<Hydradragon>(
             "Hydradragon",
             fields,
@@ -64,6 +169,18 @@ impl ::protobuf::Message for Hydradragon {
     fn merge_from(&mut self, is: &mut ::protobuf::CodedInputStream<'_>) -> ::protobuf::Result<()> {
         while let Some(tag) = is.read_raw_tag_or_eof()? {
             match tag {
+                8 => {
+                    self.min_sdk = ::std::option::Option::Some(is.read_int64()?);
+                },
+                16 => {
+                    self.max_sdk = ::std::option::Option::Some(is.read_int64()?);
+                },
+                24 => {
+                    self.target_sdk = ::std::option::Option::Some(is.read_int64()?);
+                },
+                32 => {
+                    self.permissions_number = ::std::option::Option::Some(is.read_int64()?);
+                },
                 tag => {
                     ::protobuf::rt::read_unknown_or_skip_group(tag, is, self.special_fields.mut_unknown_fields())?;
                 },
@@ -76,12 +193,36 @@ impl ::protobuf::Message for Hydradragon {
     #[allow(unused_variables)]
     fn compute_size(&self) -> u64 {
         let mut my_size = 0;
+        if let Some(v) = self.min_sdk {
+            my_size += ::protobuf::rt::int64_size(1, v);
+        }
+        if let Some(v) = self.max_sdk {
+            my_size += ::protobuf::rt::int64_size(2, v);
+        }
+        if let Some(v) = self.target_sdk {
+            my_size += ::protobuf::rt::int64_size(3, v);
+        }
+        if let Some(v) = self.permissions_number {
+            my_size += ::protobuf::rt::int64_size(4, v);
+        }
         my_size += ::protobuf::rt::unknown_fields_size(self.special_fields.unknown_fields());
         self.special_fields.cached_size().set(my_size as u32);
         my_size
     }
 
     fn write_to_with_cached_sizes(&self, os: &mut ::protobuf::CodedOutputStream<'_>) -> ::protobuf::Result<()> {
+        if let Some(v) = self.min_sdk {
+            os.write_int64(1, v)?;
+        }
+        if let Some(v) = self.max_sdk {
+            os.write_int64(2, v)?;
+        }
+        if let Some(v) = self.target_sdk {
+            os.write_int64(3, v)?;
+        }
+        if let Some(v) = self.permissions_number {
+            os.write_int64(4, v)?;
+        }
         os.write_unknown_fields(self.special_fields.unknown_fields())?;
         ::std::result::Result::Ok(())
     }
@@ -99,11 +240,19 @@ impl ::protobuf::Message for Hydradragon {
     }
 
     fn clear(&mut self) {
+        self.min_sdk = ::std::option::Option::None;
+        self.max_sdk = ::std::option::Option::None;
+        self.target_sdk = ::std::option::Option::None;
+        self.permissions_number = ::std::option::Option::None;
         self.special_fields.clear();
     }
 
     fn default_instance() -> &'static Hydradragon {
         static instance: Hydradragon = Hydradragon {
+            min_sdk: ::std::option::Option::None,
+            max_sdk: ::std::option::Option::None,
+            target_sdk: ::std::option::Option::None,
+            permissions_number: ::std::option::Option::None,
             special_fields: ::protobuf::SpecialFields::new(),
         };
         &instance
@@ -128,9 +277,12 @@ impl ::protobuf::reflect::ProtobufValue for Hydradragon {
 }
 
 static file_descriptor_proto_data: &'static [u8] = b"\
-    \n\x11hydradragon.proto\x12\x0bhydradragon\x1a\nyara.proto\"\r\n\x0bHydr\
-    adragonB>\xfa\x92\x19:\n\x0bhydradragon\x12\x17hydradragon.Hydradragon\
-    \x1a\x12hydradragon-moduleb\x06proto2\
+    \n\x11hydradragon.proto\x12\x0bhydradragon\x1a\nyara.proto\"\x8d\x01\n\
+    \x0bHydradragon\x12\x17\n\x07min_sdk\x18\x01\x20\x01(\x03R\x06minSdk\x12\
+    \x17\n\x07max_sdk\x18\x02\x20\x01(\x03R\x06maxSdk\x12\x1d\n\ntarget_sdk\
+    \x18\x03\x20\x01(\x03R\ttargetSdk\x12-\n\x12permissions_number\x18\x04\
+    \x20\x01(\x03R\x11permissionsNumberB>\xfa\x92\x19:\n\x0bhydradragon\x12\
+    \x17hydradragon.Hydradragon\x1a\x12hydradragon-moduleb\x06proto2\
 ";
 
 /// `FileDescriptorProto` object which was a source for this generated file

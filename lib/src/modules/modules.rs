@@ -1,6 +1,4 @@
 // File generated automatically by build.rs. Do not edit.
-#[cfg(feature = "androguard-module")]
-mod androguard;
 #[cfg(feature = "console-module")]
 mod console;
 #[cfg(feature = "crx-module")]

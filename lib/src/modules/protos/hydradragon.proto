@@ -11,4 +11,13 @@ option (yara.module_options) = {
 
 message Hydradragon {
   // This module contains only exported functions, and doesn't return any data
+  // SDK versions parsed from an external APK analysis report. The functions
+  // (certificate.*, url, app_name, permission, activity, main_activity,
+  // service, package_name) are provided via #[module_export] with dotted
+  // names, so they need no field here (same as the cuckoo module).
+  optional int64 min_sdk = 1;
+  optional int64 max_sdk = 2;
+  optional int64 target_sdk = 3;
+  // Number of declared permissions (used as `hydradragon.permissions_number`).
+  optional int64 permissions_number = 4;
 }
