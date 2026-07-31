@@ -389,18 +389,61 @@ impl Ord for AtomsQuality {
     }
 }
 
+/// Maximum atom size tried when [`best_range_in_bytes`] determines that the
+/// best [`DESIRED_ATOM_SIZE`]-byte window has insufficient entropy.
+///
+/// This is the yara-x equivalent of the ClamAV dynamic atom-depth filter:
+/// rather than rejecting low-entropy atoms (which would cause false negatives
+/// since yara-x has no AutoMatch fallback), we instead search for a *longer*
+/// atom that achieves higher entropy.  A 6–8 byte atom from a mostly-null
+/// region produces far fewer prefilter false positives than a 4-byte one.
+pub(crate) const DYNAMIC_MAX_ATOM_SIZE: usize = 8;
+
+/// Minimum quality score a [`DESIRED_ATOM_SIZE`]-byte candidate must reach
+/// before we stop expanding and accept it.  Candidates below this score
+/// trigger a second pass that tries window sizes up to [`DYNAMIC_MAX_ATOM_SIZE`].
+const ENTROPY_EXPAND_THRESHOLD: i32 = 40;
+
 /// Returns the range for the best possible atom that can be extracted from
 /// the slice and its quality.
+///
+/// The search starts with windows of [`DESIRED_ATOM_SIZE`] bytes.  If the
+/// best such window scores below [`ENTROPY_EXPAND_THRESHOLD`] (indicating
+/// low-entropy content like null runs or repeated ASCII), the search is
+/// extended to try larger windows up to [`DYNAMIC_MAX_ATOM_SIZE`] bytes.
+/// This mirrors the ClamAV "dynamic min-depth" filter but avoids false
+/// negatives: atoms are never removed, only made longer when beneficial.
 pub(crate) fn best_range_in_bytes(bytes: &[u8]) -> (Range<usize>, i32) {
     let mut best_quality = i32::MIN;
     let mut best_range = 0..0;
 
+    // First pass: try windows of exactly DESIRED_ATOM_SIZE.
     for i in 0..=bytes.len().saturating_sub(DESIRED_ATOM_SIZE) {
         let range = i..min(bytes.len(), i + DESIRED_ATOM_SIZE);
         let quality = atom_quality(&bytes[range.clone()]);
         if quality > best_quality {
             best_quality = quality;
             best_range = range;
+        }
+    }
+
+    // Second pass: if the best short-window atom is low-entropy, try larger
+    // windows.  A longer atom that includes more high-entropy bytes produces
+    // fewer prefilter false positives without risking false negatives.
+    if best_quality < ENTROPY_EXPAND_THRESHOLD && bytes.len() > DESIRED_ATOM_SIZE {
+        for size in (DESIRED_ATOM_SIZE + 1)..=DYNAMIC_MAX_ATOM_SIZE {
+            for i in 0..=bytes.len().saturating_sub(size) {
+                let range = i..min(bytes.len(), i + size);
+                let quality = atom_quality(&bytes[range.clone()]);
+                if quality > best_quality {
+                    best_quality = quality;
+                    best_range = range;
+                }
+            }
+            // Stop expanding once quality is acceptable.
+            if best_quality >= ENTROPY_EXPAND_THRESHOLD {
+                break;
+            }
         }
     }
 
@@ -479,6 +522,7 @@ where
     }
     finder.finalize().1
 }
+
 
 #[cfg(test)]
 mod test {
