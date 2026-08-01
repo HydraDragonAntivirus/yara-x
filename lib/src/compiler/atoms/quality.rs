@@ -430,7 +430,9 @@ pub(crate) fn best_range_in_bytes(bytes: &[u8]) -> (Range<usize>, i32) {
     // Second pass: if the best short-window atom is low-entropy, try larger
     // windows.  A longer atom that includes more high-entropy bytes produces
     // fewer prefilter false positives without risking false negatives.
-    if best_quality < ENTROPY_EXPAND_THRESHOLD && bytes.len() > DESIRED_ATOM_SIZE {
+    if best_quality < ENTROPY_EXPAND_THRESHOLD
+        && bytes.len() > DESIRED_ATOM_SIZE
+    {
         for size in (DESIRED_ATOM_SIZE + 1)..=DYNAMIC_MAX_ATOM_SIZE {
             for i in 0..=bytes.len().saturating_sub(size) {
                 let range = i..min(bytes.len(), i + size);
@@ -522,7 +524,6 @@ where
     }
     finder.finalize().1
 }
-
 
 #[cfg(test)]
 mod test {
