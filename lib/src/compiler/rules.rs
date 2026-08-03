@@ -3,12 +3,13 @@ use std::fmt;
 use std::io::{BufWriter, Read, Write};
 use std::ops::{Bound, RangeBounds};
 use std::slice::Iter;
+use std::sync::OnceLock;
 #[cfg(feature = "logging")]
 use std::time::Instant;
 
 use anyhow::anyhow;
-use daachorse::DoubleArrayAhoCorasick;
 use daachorse::clamav_prefilter::ClamavMultilevelPrefilter;
+use daachorse::DoubleArrayAhoCorasick;
 #[cfg(feature = "logging")]
 use log::*;
 use regex_automata::meta::Regex;
@@ -44,6 +45,9 @@ const SERIALIZATION_VERSION: u32 = 6;
 /// used.
 pub(crate) struct AhoCorasick {
     pub(crate) daachorse: DoubleArrayAhoCorasick<u32>,
+    /// Cache of the ClamAV-style dense transition table, rebuilt lazily once
+    /// and reused across scans by [`ClamavFastScanner`].
+    pub(crate) dense: OnceLock<Vec<u32>>,
     pub(crate) teddy: Option<teddy::Searcher>,
     pub(crate) prefilter: Option<ClamavMultilevelPrefilter>,
     pub(crate) prefilter_covers_all: bool,
@@ -69,6 +73,7 @@ impl<'de> Deserialize<'de> for AhoCorasick {
             .map_err(|e| serde::de::Error::custom(format!("{}", e)))?;
         Ok(Self {
             daachorse,
+            dense: OnceLock::new(),
             teddy: None,
             prefilter: None,
             prefilter_covers_all: false,
@@ -82,6 +87,7 @@ impl Default for AhoCorasick {
             DoubleArrayAhoCorasick::new(std::iter::empty::<&[u8]>()).unwrap();
         Self {
             daachorse,
+            dense: OnceLock::new(),
             teddy: None,
             prefilter: None,
             prefilter_covers_all: false,
@@ -99,6 +105,7 @@ impl AhoCorasick {
 
         let mut ac = Self {
             daachorse,
+            dense: OnceLock::new(),
             teddy: None,
             prefilter: None,
             prefilter_covers_all: false,

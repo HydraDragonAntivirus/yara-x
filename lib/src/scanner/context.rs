@@ -17,6 +17,7 @@ use base64::Engine;
 use bitvec::order::Lsb0;
 use bitvec::slice::BitSlice;
 use bstr::{BString, ByteSlice};
+use daachorse::ClamavFastScanner;
 use indexmap::IndexMap;
 use protobuf::{MessageDyn, MessageFull};
 use regex_automata::meta::Regex;
@@ -826,9 +827,13 @@ impl ScanContext<'_, '_> {
                     );
                 });
             }
-            // Otherwise use the Aho-Corasick algorithm.
+            // Otherwise use the Aho-Corasick algorithm (ClamAV-style dense
+            // transition table: one array lookup per byte).
             _ => {
-                for ac_match in ac.daachorse.find_overlapping_iter(data) {
+                let dense =
+                    ac.dense.get_or_init(|| ac.daachorse.build_dense_table());
+                let fast = ClamavFastScanner::from_dense(&ac.daachorse, dense);
+                for ac_match in fast.find_iter(data) {
                     if HEARTBEAT_COUNTER.load(Ordering::Relaxed)
                         >= self.deadline
                     {

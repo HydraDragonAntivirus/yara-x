@@ -915,7 +915,7 @@ dependencies = [
 [[package]]
 name = "daachorse"
 version = "4.0.0"
-source = "git+https://github.com/HydraDragonAntivirus/daachorse.git?branch=main#0f7e02f389edced90922cb9830800628fc43ed61"
+source = "git+https://github.com/HydraDragonAntivirus/daachorse.git?branch=main#cbbcdebd2542063f1361906c0d64d09f0e8040e4"
 
 [[package]]
 name = "darling"
