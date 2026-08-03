@@ -8,8 +8,8 @@ use std::sync::OnceLock;
 use std::time::Instant;
 
 use anyhow::anyhow;
-use daachorse::clamav_prefilter::ClamavMultilevelPrefilter;
 use daachorse::DoubleArrayAhoCorasick;
+use daachorse::clamav_prefilter::ClamavMultilevelPrefilter;
 #[cfg(feature = "logging")]
 use log::*;
 use regex_automata::meta::Regex;
