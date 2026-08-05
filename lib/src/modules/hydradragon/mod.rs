@@ -40,6 +40,10 @@
 //! **Per-package HIPS metadata** (runtime checks, passed via JSON):
 //!   * `hydradragon.device_admin(package_re)` — 1 if the package is an active Device Administrator
 //!   * `hydradragon.hidden_app(package_re)` — 1 if the package has no launcher icon (hidden app)
+//!   * `hydradragon.audio_spike(package_re)` — media-volume spike (scareware) score
+//!   * `hydradragon.audio_abuse(package_re)` — alarm/emergency-usage audio score
+//!   * `hydradragon.clipboard_read(package_re)` — sensitive-clipboard read score
+//!   * `hydradragon.wallpaper_change(package_re)` — wallpaper-change event count
 //!
 //! **Crypto-miner detection** (runtime CPU + memory profiling):
 //!   * `hydradragon.miner_count(package_re)` — count of miner events for matching packages
@@ -55,6 +59,9 @@
 //!   * `hydradragon.certificate.issuer(regex|string)` — certificate issuer DN
 //!   * `hydradragon.certificate.subject(regex|string)` — certificate subject DN
 //!   * `hydradragon.certificate.sha1("hex")` — certificate SHA-1
+//!   * `hydradragon.certificate.not_before(regex|string)` — validity not-before
+//!   * `hydradragon.certificate.not_after(regex|string)` — validity not-after
+//!   * `hydradragon.certificate.expired()` — 1 if expired/not-yet-valid
 //!   * `hydradragon.app_name(regex|string)`, `hydradragon.package_name(regex|string)`
 //!   * `hydradragon.permission(regex|string)` — declared permission
 //!   * `hydradragon.activity / main_activity / service / receiver(regex|string)`
@@ -873,6 +880,113 @@ fn launcher_change_r(ctx: &ScanContext, package_re: RegexId) -> i64 {
         .sum()
 }
 
+// ── Audio volume-spike (scareware attention tactic) ─────────────────────────
+
+#[module_export(name = "audio_spike")]
+fn audio_spike_r(ctx: &ScanContext, package_re: RegexId) -> i64 {
+    let local = get_local();
+    let events = match local.as_ref().and_then(|l| l.audio_spike_events.as_ref()) {
+        Some(e) => e,
+        None => return 0,
+    };
+    events
+        .iter()
+        .filter(|e| {
+            e.package_name
+                .as_ref()
+                .map(|p| ctx.regexp_matches(package_re, p.as_bytes()))
+                .unwrap_or(false)
+        })
+        .map(|e| {
+            let mut score = 1i64;
+            // A genuine spike (low→max) is inherently suspicious.
+            if e.is_malicious.unwrap_or(false) {
+                score += 2;
+            }
+            if let (Some(from), Some(to)) = (e.volume_from, e.volume_to) {
+                if to > from {
+                    score += 2;
+                }
+            }
+            score
+        })
+        .sum()
+}
+
+// ── Alarm/emergency audio playback (scareware audio-abuse) ──────────────────
+
+#[module_export(name = "audio_abuse")]
+fn audio_abuse_r(ctx: &ScanContext, package_re: RegexId) -> i64 {
+    let local = get_local();
+    let events = match local.as_ref().and_then(|l| l.audio_abuse_events.as_ref()) {
+        Some(e) => e,
+        None => return 0,
+    };
+    events
+        .iter()
+        .filter(|e| {
+            e.package_name
+                .as_ref()
+                .map(|p| ctx.regexp_matches(package_re, p.as_bytes()))
+                .unwrap_or(false)
+        })
+        .map(|e| {
+            let mut score = 2i64; // alarm/emergency usage is inherently abusive
+            if e.is_malicious.unwrap_or(false) {
+                score += 2;
+            }
+            score
+        })
+        .sum()
+}
+
+// ── Sensitive-clipboard reads (spyware data-theft pattern) ──────────────────
+
+#[module_export(name = "clipboard_read")]
+fn clipboard_read_r(ctx: &ScanContext, package_re: RegexId) -> i64 {
+    let local = get_local();
+    let events = match local.as_ref().and_then(|l| l.clipboard_read_events.as_ref()) {
+        Some(e) => e,
+        None => return 0,
+    };
+    events
+        .iter()
+        .filter(|e| {
+            e.package_name
+                .as_ref()
+                .map(|p| ctx.regexp_matches(package_re, p.as_bytes()))
+                .unwrap_or(false)
+        })
+        .map(|e| {
+            let mut score = 1i64;
+            if e.is_malicious.unwrap_or(false) {
+                score += 3;
+            }
+            score
+        })
+        .sum()
+}
+
+// ── Wallpaper change (ransomware/scareware signature) ───────────────────────
+
+#[module_export(name = "wallpaper_change")]
+fn wallpaper_change_r(ctx: &ScanContext, package_re: RegexId) -> i64 {
+    let local = get_local();
+    let events = match local.as_ref().and_then(|l| l.wallpaper_events.as_ref()) {
+        Some(e) => e,
+        None => return 0,
+    };
+    events
+        .iter()
+        .filter(|e| {
+            e.package_name
+                .as_ref()
+                .map(|p| ctx.regexp_matches(package_re, p.as_bytes()))
+                .unwrap_or(false)
+        })
+        .count() as i64
+}
+
 // ── Per-package metadata functions (HIPS JSON) ─────────────────────────────
 
 #[module_export(name = "device_admin")]
@@ -1149,6 +1263,61 @@ fn certificate_sha1(ctx: &ScanContext, value: RuntimeString) -> i64 {
             .as_ref(),
         needle,
     )
+}
+
+#[module_export(name = "certificate.not_before")]
+fn certificate_not_before_r(ctx: &ScanContext, re: RegexId) -> i64 {
+    one_regex(
+        ctx,
+        re,
+        get_local()
+            .and_then(|l| l.certificate.as_ref().and_then(|c| c.not_before.clone()))
+            .as_ref(),
+    )
+}
+
+#[module_export(name = "certificate.not_before")]
+fn certificate_not_before_s(ctx: &ScanContext, value: RuntimeString) -> i64 {
+    let Ok(needle) = value.to_str(ctx) else {
+        return 0;
+    };
+    one_eqic(
+        get_local()
+            .and_then(|l| l.certificate.as_ref().and_then(|c| c.not_before.clone()))
+            .as_ref(),
+        needle,
+    )
+}
+
+#[module_export(name = "certificate.not_after")]
+fn certificate_not_after_r(ctx: &ScanContext, re: RegexId) -> i64 {
+    one_regex(
+        ctx,
+        re,
+        get_local()
+            .and_then(|l| l.certificate.as_ref().and_then(|c| c.not_after.clone()))
+            .as_ref(),
+    )
+}
+
+#[module_export(name = "certificate.not_after")]
+fn certificate_not_after_s(ctx: &ScanContext, value: RuntimeString) -> i64 {
+    let Ok(needle) = value.to_str(ctx) else {
+        return 0;
+    };
+    one_eqic(
+        get_local()
+            .and_then(|l| l.certificate.as_ref().and_then(|c| c.not_after.clone()))
+            .as_ref(),
+        needle,
+    )
+}
+
+#[module_export(name = "certificate.expired")]
+fn certificate_expired(ctx: &ScanContext) -> i64 {
+    get_local()
+        .and_then(|l| l.certificate.as_ref().and_then(|c| c.expired))
+        .unwrap_or(0)
 }
 
 // ── app_name ───────────────────────────────────────────────────────────────

@@ -119,6 +119,48 @@ pub(super) struct LauncherChangeEventJson {
     pub is_suspicious: Option<bool>,
 }
 
+/// Media-volume spike observed while a (suspected) app was in the foreground —
+/// scareware/ransomware attention tactic. See `hydradragon.audio_spike`.
+#[derive(serde::Deserialize, Debug, Default)]
+pub(super) struct AudioSpikeEventJson {
+    pub package_name: Option<String>,
+    pub volume_from: Option<i64>,
+    pub volume_to: Option<i64>,
+    pub max_volume: Option<i64>,
+    pub is_malicious: Option<bool>,
+}
+
+/// Package playing audio with a high-priority usage (alarm/emergency/ringtone) —
+/// scareware audio-abuse. See `hydradragon.audio_abuse`.
+#[derive(serde::Deserialize, Debug, Default)]
+pub(super) struct AudioAbuseEventJson {
+    pub package_name: Option<String>,
+    pub usage: Option<i64>,
+    pub usage_name: Option<String>,
+    pub content_type: Option<i64>,
+    pub is_malicious: Option<bool>,
+}
+
+/// Sensitive clipboard content (crypto address, token, seed phrase) observed
+/// on the clipboard while a different app took the foreground — info-stealer
+/// pattern. See `hydradragon.clipboard_read`.
+#[derive(serde::Deserialize, Debug, Default)]
+pub(super) struct ClipboardReadEventJson {
+    pub package_name: Option<String>,
+    pub timestamp: Option<i64>,
+    pub sensitive: Option<bool>,
+    pub hint: Option<String>,
+    pub is_malicious: Option<bool>,
+}
+
+/// Wallpaper replaced while an app was in the foreground — ransomware/scareware
+/// signature. See `hydradragon.wallpaper_change`.
+#[derive(serde::Deserialize, Debug, Default)]
+pub(super) struct WallpaperChangeEventJson {
+    pub package_name: Option<String>,
+    pub wallpaper_id: Option<i64>,
+}
+
 #[derive(serde::Deserialize, Debug, Default)]
 pub(super) struct SystemEventJson {
     pub is_rooted: Option<bool>,
@@ -191,6 +233,14 @@ pub(super) struct CertificateJson {
     #[serde(rename = "IssuerDN")]
     pub issuer_dn: Option<String>,
     pub sha1: Option<String>,
+    /// ISO-8601 "YYYY-MM-DD HH:MM:SS" (UTC) certificate not-before.
+    #[serde(rename = "notBefore")]
+    pub not_before: Option<String>,
+    /// ISO-8601 "YYYY-MM-DD HH:MM:SS" (UTC) certificate not-after.
+    #[serde(rename = "notAfter")]
+    pub not_after: Option<String>,
+    /// 1 if the certificate is expired or not-yet-valid at scan time, else 0.
+    pub expired: Option<i64>,
 }
 
 #[derive(serde::Deserialize, Debug, Default)]
@@ -246,6 +296,17 @@ pub(super) struct HydradragonJson {
     /// Launcher-change attempts (default home app hijacking), for
     /// `hydradragon.launcher_change`.
     pub launcher_change_events: Option<Vec<LauncherChangeEventJson>>,
+    /// Media-volume spikes (scareware attention tactic), for
+    /// `hydradragon.audio_spike`.
+    pub audio_spike_events: Option<Vec<AudioSpikeEventJson>>,
+    /// Alarm/emergency-usage audio playback (scareware), for
+    /// `hydradragon.audio_abuse`.
+    pub audio_abuse_events: Option<Vec<AudioAbuseEventJson>>,
+    /// Sensitive-clipboard reads (info-stealer), for `hydradragon.clipboard_read`.
+    pub clipboard_read_events: Option<Vec<ClipboardReadEventJson>>,
+    /// Wallpaper changes attributed to the foreground app, for
+    /// `hydradragon.wallpaper_change`.
+    pub wallpaper_events: Option<Vec<WallpaperChangeEventJson>>,
     pub system: Option<SystemEventJson>,
     pub behavior_flags: Option<Vec<BehaviorFlagsJson>>,
     pub behavior_state: Option<BehaviorStateJson>,
