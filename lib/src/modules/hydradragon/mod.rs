@@ -28,7 +28,9 @@
 //!   * `hydradragon.strandhogg(package_re)` — StrandHogg protection
 //!   * `hydradragon.rooted()` — device rooted check
 //!   * `hydradragon.debug_mode()` — USB/debug mode check
-//!   * `hydradragon.behavior_flagged(package_re)` — behavioral flag count
+//!   * `hydradragon.behavior_flagged(regex)` — count of behavior flags whose
+//!     string matches (e.g. `RANSOMWARE`, `FILE_READ:file=..`, `APP_LAUNCH:..`)
+//!     or flags belonging to a matching package
 //!   * `hydradragon.foreground_package(regex)` — foreground app match
 //!   * `hydradragon.observed_packages(regex)` — observed apps count
 //!   * `hydradragon.network_connections(package_re)` — network connections
@@ -745,9 +747,20 @@ fn behavior_flagged_r(ctx: &ScanContext, package_re: RegexId) -> i64 {
     };
     let mut count: i64 = 0;
     for f in flags {
-        if let Some(pkg) = &f.package_name {
-            if ctx.regexp_matches(package_re, pkg.as_bytes()) {
-                count += f.flags.as_ref().map(|fl| fl.len() as i64).unwrap_or(0);
+        let pkg_match = f
+            .package_name
+            .as_ref()
+            .map(|p| ctx.regexp_matches(package_re, p.as_bytes()))
+            .unwrap_or(false);
+        let flag_list = f.flags.as_ref();
+        // Match the regex against the package name AND each individual flag
+        // string (e.g. "RANSOMWARE", "FILE_READ:pid=..:file=..", "APP_LAUNCH:..").
+        // Rules in the shipped HIPS ruleset are written against the flag
+        // strings; matching the package name too keeps
+        // `behavior_flagged(/some\.package/)` working as a per-package gate.
+        for flag in flag_list.into_iter().flatten() {
+            if pkg_match || ctx.regexp_matches(package_re, flag.as_bytes()) {
+                count += 1;
             }
         }
     }
