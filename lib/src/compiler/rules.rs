@@ -9,7 +9,7 @@ use std::time::Instant;
 
 use anyhow::anyhow;
 use daachorse::DoubleArrayAhoCorasick;
-use daachorse::clamav_prefilter::ClamavMultilevelPrefilter;
+use daachorse::clamav_prefilter::ClamavPrefilter;
 #[cfg(feature = "logging")]
 use log::*;
 use regex_automata::meta::Regex;
@@ -49,7 +49,7 @@ pub(crate) struct AhoCorasick {
     /// and reused across scans by [`ClamavFastScanner`].
     pub(crate) dense: OnceLock<Vec<u32>>,
     pub(crate) teddy: Option<teddy::Searcher>,
-    pub(crate) prefilter: Option<ClamavMultilevelPrefilter>,
+    pub(crate) prefilter: Option<ClamavPrefilter>,
     pub(crate) prefilter_covers_all: bool,
 }
 
@@ -133,7 +133,7 @@ impl AhoCorasick {
             self.prefilter = None;
             return;
         }
-        self.prefilter = Some(ClamavMultilevelPrefilter::from_patterns(&pats));
+        self.prefilter = Some(ClamavPrefilter::from_patterns(&pats));
     }
 
     pub(crate) fn rebuild_teddy<'a, I>(&mut self, patterns: I)
